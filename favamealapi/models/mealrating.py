@@ -3,7 +3,7 @@ from django.db import models
 
 
 class MealRating(models.Model):
-    user = models.ForeignKey(
+    user = models.OneToOneField(
         User, on_delete=models.CASCADE, related_name="mealrating")
     meal = models.ForeignKey(
         "Meal", on_delete=models.CASCADE, related_name="mealrating")

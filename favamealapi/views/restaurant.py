@@ -8,22 +8,6 @@ from favamealapi.models import Restaurant
 from favamealapi.models.favoriterestaurant import FavoriteRestaurant
 
 
-class RestaurantSerializer(serializers.ModelSerializer):
-    """JSON serializer for restaurants"""
-
-    class Meta:
-        model = Restaurant
-        fields = ('id', 'name', 'address', 'favorite',)
-
-class FaveSerializer(serializers.ModelSerializer):
-    """JSON serializer for favorites"""
-
-    class Meta:
-        model = FavoriteRestaurant
-        fields = ('restaurant',)
-        depth = 1
-
-
 class RestaurantView(ViewSet):
     """ViewSet for handling restuarant requests"""
 
@@ -79,3 +63,19 @@ class RestaurantView(ViewSet):
 
     # TODO: Write a custom action named `star` that will allow a client to
     # send a POST and a DELETE request to /restaurant/2/star
+
+
+class RestaurantSerializer(serializers.ModelSerializer):
+    """JSON serializer for restaurants"""
+
+    class Meta:
+        model = Restaurant
+        fields = ('id', 'name', 'address', 'favorite',)
+
+class FaveSerializer(serializers.ModelSerializer):
+    """JSON serializer for favorites"""
+
+    class Meta:
+        model = FavoriteRestaurant
+        fields = ('restaurant',)
+        depth = 1
