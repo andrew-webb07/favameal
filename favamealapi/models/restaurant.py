@@ -7,3 +7,10 @@ class Restaurant(models.Model):
     address = models.CharField(max_length=255)
 
     # TODO: Add a `favorite` custom property
+    @property
+    def favorite(self):
+        return self.__favorite
+
+    @favorite.setter
+    def favorite(self, value):
+        self.__favorite = value

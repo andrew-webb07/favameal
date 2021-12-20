@@ -7,16 +7,8 @@ from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import serializers
 from favamealapi.models import Meal, MealRating, Restaurant, FavoriteMeal
+from django.contrib.auth.models import User
 from favamealapi.views.restaurant import RestaurantSerializer
-
-
-class MealSerializer(serializers.ModelSerializer):
-    """JSON serializer for meals"""
-    restaurant = RestaurantSerializer(many=False)
-
-    class Meta:
-        model = Meal
-        fields = ('id', 'name', 'restaurant', 'user_rating', 'avg_rating')
 
 
 class MealView(ViewSet):
@@ -51,13 +43,15 @@ class MealView(ViewSet):
             meal = Meal.objects.get(pk=pk)
 
             # TODO: Get the rating for current user and assign to `user_rating` property
+            mealRating = MealRating.objects.get(user=request.auth.user)
+            meal.user_rating = mealRating.rating
 
             # TODO: Get the average rating for requested meal and assign to `avg_rating` property
 
             # TODO: Assign a value to the `is_favorite` property of requested meal
 
 
-            serializer = RestaurantSerializer(
+            serializer = MealSerializer(
                 meal, context={'request': request})
             return Response(serializer.data)
         except Exception as ex:
@@ -93,3 +87,26 @@ class MealView(ViewSet):
 
     # TODO: Add a custom action named `star` that will allow a client to send a
     #  POST and a DELETE request to /meals/3/star.
+
+class UserSerializer(serializers.ModelSerializer):
+    """JSON serializer for event organizer's related Django user"""
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'email']
+
+class MealRatingSerializer(serializers.ModelSerializer):
+    """JSON serializer for event organizer"""
+    user = UserSerializer(many=False)
+
+    class Meta:
+        model = MealRating
+        fields = ['user', 'meal', 'rating']
+
+class MealSerializer(serializers.ModelSerializer):
+    """JSON serializer for meals"""
+    restaurant = RestaurantSerializer(many=False)
+
+    class Meta:
+        model = Meal
+        fields = ('id', 'name', 'restaurant', 'user_rating')
+        depth = 1
