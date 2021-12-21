@@ -43,6 +43,13 @@ class RestaurantView(ViewSet):
             restaurant = Restaurant.objects.get(pk=pk)
 
             # TODO: Add the correct value to the `favorite` property of the requested restaurant
+            user = User.objects.get(username=request.auth.user.username)
+            favorite = FavoriteRestaurant.objects.filter(Q(user=user) & Q(restaurant=restaurant))
+            
+            if favorite:
+                restaurant.favorite = True
+            else:
+                restaurant.favorite = False
 
             serializer = RestaurantSerializer(
                 restaurant, context={'request': request})
@@ -59,7 +66,17 @@ class RestaurantView(ViewSet):
         restaurants = Restaurant.objects.all()
 
         # TODO: Add the correct value to the `favorite` property of each restaurant
-
+        user = User.objects.get(username=request.auth.user.username)
+        user_favorites = FavoriteRestaurant.objects.filter(user=user)
+        
+        for restaurant in restaurants:
+            for favorite in user_favorites:
+                if restaurant.id == favorite.restaurant_id:
+                    restaurant.favorite = True
+                    break
+                else:
+                    restaurant.favorite = False 
+                
 
         serializer = RestaurantSerializer(restaurants, many=True, context={'request': request})
 
