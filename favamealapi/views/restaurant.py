@@ -5,7 +5,11 @@ from rest_framework import serializers, status
 from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
 from favamealapi.models import Restaurant
+from favamealapi.models import favoriterestaurant
 from favamealapi.models.favoriterestaurant import FavoriteRestaurant
+from django.contrib.auth.models import User 
+from rest_framework.decorators import action
+from django.db.models import Q
 
 
 class RestaurantView(ViewSet):
@@ -63,6 +67,32 @@ class RestaurantView(ViewSet):
 
     # TODO: Write a custom action named `star` that will allow a client to
     # send a POST and a DELETE request to /restaurant/2/star
+    
+    @action(methods=['post', 'delete'], detail=True)
+    def star(self, request, pk=None):
+        if request.method == 'POST':
+            restaurant = Restaurant.objects.get(pk=pk)
+            user = User.objects.get(username=request.auth.user.username)
+            restaurant.favorite = True
+            favorite_restaurant = FavoriteRestaurant()
+            favorite_restaurant.user = user
+            favorite_restaurant.restaurant = restaurant
+            try:
+                favorite_restaurant.save()
+                serializer = FaveSerializer(favorite_restaurant, many=False, context={'request': request})
+                return Response(serializer.data)
+            except Exception as ex:
+                return Response({'message': ex.args[0]})
+        elif request.method == "DELETE":
+            try:
+                restaurant = Restaurant.objects.get(pk=pk)
+                user = User.objects.get(username=request.auth.user.username)
+                favorite = FavoriteRestaurant.objects.filter(Q(user=user) & Q(restaurant=restaurant))
+                restaurant.favorite = False
+                favorite.delete()
+                return Response({}, status=status.HTTP_204_NO_CONTENT)
+            except Exception as ex:
+                return Response({'message': ex.args[0]}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class RestaurantSerializer(serializers.ModelSerializer):
@@ -77,5 +107,5 @@ class FaveSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = FavoriteRestaurant
-        fields = ('restaurant',)
+        fields = ('__all__')
         depth = 1
