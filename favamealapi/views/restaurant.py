@@ -90,7 +90,7 @@ class RestaurantView(ViewSet):
         if request.method == 'POST':
             restaurant = Restaurant.objects.get(pk=pk)
             user = User.objects.get(username=request.auth.user.username)
-            restaurant.favorite = True
+            # restaurant.favorite = True
             favorite_restaurant = FavoriteRestaurant()
             favorite_restaurant.user = user
             favorite_restaurant.restaurant = restaurant
@@ -105,7 +105,7 @@ class RestaurantView(ViewSet):
                 restaurant = Restaurant.objects.get(pk=pk)
                 user = User.objects.get(username=request.auth.user.username)
                 favorite = FavoriteRestaurant.objects.filter(Q(user=user) & Q(restaurant=restaurant))
-                restaurant.favorite = False
+                # restaurant.favorite = False
                 favorite.delete()
                 return Response({}, status=status.HTTP_204_NO_CONTENT)
             except Exception as ex:

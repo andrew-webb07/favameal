@@ -6,9 +6,10 @@ from rest_framework.decorators import action
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import serializers
-from favamealapi.models import Meal, MealRating, Restaurant, FavoriteMeal
+from favamealapi.models import Meal, MealRating, Restaurant, FavoriteMeal, favoritemeal
 from django.contrib.auth.models import User
 from favamealapi.views.restaurant import RestaurantSerializer
+from django.db.models import Q
 
 
 class MealView(ViewSet):
@@ -23,7 +24,6 @@ class MealView(ViewSet):
         meal = Meal()
         meal.name = request.data["name"]
         meal.restaurant = Restaurant.objects.get(pk=request.data["restaurant_id"])
-
 
         try:
             meal.save()
@@ -87,6 +87,31 @@ class MealView(ViewSet):
 
     # TODO: Add a custom action named `star` that will allow a client to send a
     #  POST and a DELETE request to /meals/3/star.
+    
+    @action(methods=['post', 'delete'], detail=True)
+    def star(self, request, pk):
+        if request.method == "POST":
+            meal = Meal.objects.get(pk=pk)
+            user = User.objects.get(username=request.auth.user.username)
+            favorite_meal = FavoriteMeal()
+            favorite_meal.user = user
+            favorite_meal.meal = meal
+            try:
+                favorite_meal.save()
+                serializer = FavoriteMealSerializer(favorite_meal, many=False, context={'request': request})
+                return Response(serializer.data)
+            except Exception as ex:
+                return Response({'message': ex.args[0]})
+            
+        elif request.method == "DELETE":
+            meal = Meal.objects.get(pk=pk)
+            user = User.objects.get(username=request.auth.user.username)
+            favorite_meal = FavoriteMeal.objects.filter(Q(meal=meal) & Q(user=user))
+            try:
+                favorite_meal.delete()
+                return Response({}, status=status.HTTP_204_NO_CONTENT)
+            except Exception as ex:
+                return Response({'message': ex.args[0]}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class UserSerializer(serializers.ModelSerializer):
     """JSON serializer for event organizer's related Django user"""
@@ -109,4 +134,12 @@ class MealSerializer(serializers.ModelSerializer):
     class Meta:
         model = Meal
         fields = ('id', 'name', 'restaurant', 'user_rating')
+        depth = 1
+        
+class FavoriteMealSerializer(serializers.ModelSerializer):
+    """JSON serializer for favorites"""
+
+    class Meta:
+        model = FavoriteMeal
+        fields = ('__all__')
         depth = 1
