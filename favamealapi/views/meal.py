@@ -197,7 +197,7 @@ class MealSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Meal
-        fields = ('id', 'name', 'restaurant', 'favorite', 'user_rating')
+        fields = ('id', 'name', 'restaurant', 'favorite', 'user_rating', 'avg_rating')
         depth = 2
         
 class FavoriteMealSerializer(serializers.ModelSerializer):
