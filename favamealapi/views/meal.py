@@ -98,7 +98,39 @@ class MealView(ViewSet):
     #           "rating": 3
     #       }
 
+    @action(methods=['post','put', 'delete'], detail=True)
+    def rate(self, request, pk):
+        meal = Meal.objects.get(pk=pk)
+        user = User.objects.get(username=request.auth.user.username)
+        rating = MealRating.objects.filter(Q(user=user) & Q(meal=meal))
 
+        if rating:
+            if request.method == "PUT":
+                rating = rating[0]
+                rating.rating = request.data["rating"]
+                rating.save()
+                return Response({}, status=status.HTTP_204_NO_CONTENT)
+            elif request.method == "DELETE":
+                try:
+                    rating.delete()
+                    return Response({}, status=status.HTTP_204_NO_CONTENT)
+                except Exception as ex:
+                    return Response({'message': ex.args[0]}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        else:
+            try:
+                if request.method == "POST":
+                    rating = MealRating()
+                    rating.meal = meal
+                    rating.user = user
+                    rating.rating = request.data["rating"]
+                    try:
+                        rating.save()
+                        serializer = MealRatingSerializer(rating, many=False, context={'request': request})
+                        return Response(serializer.data)
+                    except Exception as ex:
+                        return Response({'message': ex.args[0]})
+            except Exception as ex:
+                return Response({'message': ex.args[0]})
 
 
     # TODO: Add a custom action named `star` that will allow a client to send a
