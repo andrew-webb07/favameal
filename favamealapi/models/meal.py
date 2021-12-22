@@ -8,6 +8,14 @@ class Meal(models.Model):
     restaurant = models.ForeignKey("Restaurant", on_delete=models.CASCADE)
 
     # TODO: Add an user_rating custom properties
+    
+    @property
+    def favorite(self):
+        return self.__favorite
+
+    @favorite.setter
+    def favorite(self, value):
+        self.__favorite = value
 
     @property
     def user_rating(self):

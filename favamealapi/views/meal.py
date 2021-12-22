@@ -43,16 +43,22 @@ class MealView(ViewSet):
             meal = Meal.objects.get(pk=pk)
 
             # TODO: Get the rating for current user and assign to `user_rating` property
-            mealRating = MealRating.objects.get(user=request.auth.user)
+            mealRating = MealRating.objects.get(Q(user=request.auth.user)& Q(meal=meal))
             meal.user_rating = mealRating.rating
 
             # TODO: Get the average rating for requested meal and assign to `avg_rating` property
 
             # TODO: Assign a value to the `is_favorite` property of requested meal
 
+            user = User.objects.get(username=request.auth.user.username)
+            favorite = FavoriteMeal.objects.filter(Q(user=user) & Q(meal=meal))
+            
+            if favorite:
+                meal.favorite = True
+            else:
+                meal.favorite = False
 
-            serializer = MealSerializer(
-                meal, context={'request': request})
+            serializer = MealSerializer(meal, context={'request': request})
             return Response(serializer.data)
         except Exception as ex:
             return HttpResponseServerError(ex)
@@ -70,6 +76,16 @@ class MealView(ViewSet):
         # TODO: Get the average rating for each meal and assign to `avg_rating` property
 
         # TODO: Assign a value to the `is_favorite` property of each meal
+        user = User.objects.get(username=request.auth.user.username)
+        user_favorites = FavoriteMeal.objects.filter(user=user)
+        
+        for meal in meals:
+            for favorite in user_favorites:
+                if meal.id == favorite.meal_id:
+                    meal.favorite = True
+                    break
+                else:
+                    meal.favorite = False 
 
         serializer = MealSerializer(
             meals, many=True, context={'request': request})
@@ -133,8 +149,8 @@ class MealSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Meal
-        fields = ('id', 'name', 'restaurant', 'user_rating')
-        depth = 1
+        fields = ('id', 'name', 'restaurant', 'user_rating', 'favorite')
+        depth = 2
         
 class FavoriteMealSerializer(serializers.ModelSerializer):
     """JSON serializer for favorites"""
